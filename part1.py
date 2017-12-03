@@ -26,6 +26,8 @@ DELETE /images/<id>                 Delete a specific image
 DELETE /images                      Delete all images
 """
 
+dockerName = "dockercms"
+
 @app.route('/containers', methods=['GET'])
 def containers_index():
 	"""
@@ -96,15 +98,39 @@ def containers_remove(id):
 	"""
 	Delete a specific container - must be already stopped/killed
 	"""
-	resp = ''
-	return Response(response=resp, mimetype="application/json")
+	#Error checking number to be incremented if deleted or not found
+	errorCheck = 2
+	output = docker('ps', '-a')
+	containerDelete = docker_ps_to_array(output)
+
+	#Iterates through all containers and will delete if id matches with id to be deleted
+	for cont in containerDelete:
+		if cont["id"] == id:
+			docker("stop",cont["id"])
+			docker("rm",cont["id"])
+			errorCheck = 1
+
+	if errorCheck == 2:
+		resp = '{response:"Could not find container" "%s !"}' % id
+		return Response(response=resp, mimetype="application/json")
+	else:
+		resp = '{response:"Successfully deleted container!" "%s"}' % id
+		return Response(response=resp, mimetype="application/json")
 
 @app.route('/containers', methods=['DELETE'])
 def containers_remove_all():
 	"""
 	Force remove all containers - dangrous!
 	"""
-	resp = ''
+	#Retrieving all containers then iterating through them
+	output = docker('ps', '-a')
+	containerDeletionList = docker_ps_to_array(output)
+	for cont in containerDeletionList:
+		if cont["name"] != dockerName:
+			docker("stop",cont["id"])
+			docker("rm",cont["id"])
+
+	resp = '{response:"Deleted all containers!"}'
 	return Response(response=resp, mimetype="application/json")
 
 @app.route('/images', methods=['DELETE'])
@@ -112,8 +138,13 @@ def images_remove_all():
 	"""
 	Force remove all images - dangrous!
 	"""
+	#Iterating through images deleting them
+	output = docker('images')
+	imageDeletionList = docker_images_tp_array(output)
+	for img in imageDeletionList:
+		docker("rmi",img["id"])
 
-	resp = ''
+	resp = '{response: "Deleted all images!"}'
 	return Response(response=resp, mimetype="application/json")
 
 
