@@ -50,7 +50,7 @@ def images_index():
 	"""
 	List all images
 
-	curl -X GET -H 'Accept: application/json' http://146.148.26.129/images
+	curl -s -X GET -H 'Accept: application/json' http://146.148.26.129/images
 
 	Complete the code below generating a valid response.
 	"""
@@ -138,8 +138,11 @@ def images_create():
 	curl -H 'Accept: application/json' -F file=@Dockerfile http://146.148.26.129:8080/images
 	"""
 	dockerfile = request.files['file']
+	dockerfile.save ('Dockerfile')
+	docker ('build', '-t', 'test', '.')
+	i = docker_images_to_array(docker('images'))
 
-	resp = ''
+	resp = '{"id": "%s"}' % i[0]['id']
 	return Response(response=resp, mimetype="application/json")
 
 
