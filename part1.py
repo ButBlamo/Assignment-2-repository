@@ -71,8 +71,9 @@ def containers_show(id):
 	Inspect specific container
 	"""
 
-	resp = ''
+	output = docker('ps', id)
 
+	resp = json.dumps(docker_ps_to_array(output))
 	return Response(response=resp, mimetype="application/json")
 
 @app.route('/containers/<id>/logs', methods=['GET'])
@@ -80,7 +81,12 @@ def containers_log(id):
 	"""
 	Dump specific container logs
 	"""
-	resp = ''
+	containerID = id
+	output = docker("logs",str(containerID))
+
+	resp = str(docker_logs_to_object(str(containerID),output))
+
+
 	return Response(response=resp, mimetype="application/json")
 
 
@@ -140,7 +146,7 @@ def images_remove_all():
 	"""
 	#Iterating through images deleting them
 	output = docker('images')
-	imageDeletionList = docker_images_tp_array(output)
+	imageDeletionList = docker_images_to_array(output)
 	for img in imageDeletionList:
 		docker("rmi",img["id"])
 
@@ -204,7 +210,13 @@ def images_update(id):
 	Update image attributes (support: name[:tag])  tag name should be lowercase only
 	curl -s -X PATCH -H 'Content-Type: application/json' http://localhost:8080/images/7f2619ed1768 -d '{"tag": "test:1.0"}'
 	"""
-	resp = ''
+	imageID = id
+	tag = imageVar['tag']
+
+	docker('tag', imageID, tag)
+
+
+	resp = '{response: "Image tags updated!"}'
 	return Response(response=resp, mimetype="application/json")
 
 
